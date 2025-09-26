@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Food Business Dashboard</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+  <style>
+    :root{
+      --bg:#0f1724;--card:#0b1220;--muted:#9aa7b2;--accent:#ff6b3d;--accent-2:#ffd6c2;--glass: rgba(255,255,255,0.03);
+      --success:#3ad29f;--danger:#ff6b6b;--glass-border: rgba(255,255,255,0.04);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071022 0%, #071a2a 100%);color:#e6eef6}
+    .app{display:grid;grid-template-columns:260px 1fr;gap:24px;padding:24px;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);padding:18px;border-radius:12px}
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .logo{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#081018}
+    .brand h1{font-size:16px;margin:0}
+    nav{display:flex;flex-direction:column;gap:8px}
+    .nav-item{padding:10px;border-radius:8px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+    .nav-item.active{background:linear-gradient(90deg, rgba(255,107,61,0.08), rgba(255,214,194,0.02));color:var(--accent-2);}
+
+    /* Main area */
+    .main{display:flex;flex-direction:column;gap:18px}
+    .header{display:flex;justify-content:space-between;align-items:center}
+    .search{background:var(--glass);border:1px solid var(--glass-border);padding:10px;border-radius:10px;display:flex;gap:10px;align-items:center;width:460px}
+    .search input{background:transparent;border:0;outline:none;color:inherit;width:100%}
+    .user{display:flex;gap:12px;align-items:center}
+    .user .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6ee7b7,#34d399);display:flex;align-items:center;justify-content:center;color:#042018;font-weight:700}
+
+    /* Cards */
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid var(--glass-border)}
+    .card h3{margin:0;font-size:13px;color:var(--muted)}
+    .card p{margin:8px 0 0;font-size:20px;font-weight:700}
+
+    /* Layout below */
+    .grid-2{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+    .orders{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:12px;border:1px solid var(--glass-border)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,0.03);font-size:13px}
+    th{color:var(--muted)}
+
+    .menu-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .menu-item{background:var(--glass);padding:12px;border-radius:10px;display:flex;gap:12px;align-items:center}
+    .menu-item img{width:64px;height:64px;border-radius:8px;object-fit:cover}
+    .menu-item .meta{flex:1}
+    .btn{background:var(--accent);color:#061018;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:700}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(255,107,61,0.14)}
+
+    /* modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center}
+    .modal{background:#071526;padding:18px;border-radius:12px;min-width:420px;border:1px solid var(--glass-border)}
+    .form-row{display:flex;gap:8px}
+    .form-row input, .form-row textarea, select{flex:1;padding:8px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:inherit}
+    .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+
+    /* small tweaks */
+    .muted{color:var(--muted);font-size:13px}
+    .pill{padding:6px 8px;border-radius:999px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.01);font-size:12px}
+    .legend{display:flex;gap:8px;align-items:center}
+    .legend div{display:flex;gap:6px;align-items:center}
+    .legend .sw{width:10px;height:10px;border-radius:2px}
+
+    @media (max-width:980px){.app{grid-template-columns:1fr;padding:12px}.cards{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.sidebar{display:flex;flex-direction:row;overflow:auto}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">FB</div>
+        <div>
+          <h1>FoodBiz Dashboard</h1>
+          <div class="muted" style="font-size:12px">Manage menu • orders • analytics</div>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-item active" data-view="overview">Overview</div>
+        <div class="nav-item" data-view="menu">Menu</div>
+        <div class="nav-item" data-view="orders">Orders</div>
+        <div class="nav-item" data-view="analytics">Analytics</div>
+        <div class="nav-item" data-view="settings">Settings</div>
+      </nav>
+      <div style="margin-top:14px;display:flex;gap:8px;justify-content:space-between;align-items:center">
+        <div class="muted">Total Sales</div>
+        <div style="font-weight:800">₹<span id="totalSales">0</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="header">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="11" cy="11" r="6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></circle></svg>
+            <input id="globalSearch" placeholder="Search orders, menu items, customers..." />
+          </div>
+          <button class="btn" id="addMenuBtn">+ Add Menu Item</button>
+        </div>
+        <div class="user">
+          <div style="text-align:right;margin-right:6px"><div class="muted">Welcome back</div><div style="font-weight:800">Owner • FoodBiz</div></div>
+          <div class="avatar">F</div>
+        </div>
+      </div>
+
+      <section id="view-overview">
+        <div class="cards">
+          <div class="card"><h3>Today's Orders</h3><p id="todaysOrders">0</p><div class="muted">New vs Completed</div></div>
+          <div class="card"><h3>Revenue (30d)</h3><p id="revenue">₹0</p><div class="muted">Compared to last period</div></div>
+          <div class="card"><h3>Active Menu Items</h3><p id="menuCount">0</p><div class="muted">Editable anytime</div></div>
+          <div class="card"><h3>Pending Orders</h3><p id="pendingCount">0</p><div class="muted">Need attention</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="orders">
+            <h3 style="margin-top:0">Recent Orders</h3>
+            <table id="ordersTable"><thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>
+          </div>
+          <div class="card">
+            <h3>Sales Breakdown</h3>
+            <canvas id="salesChart" style="width:100%;height:220px"></canvas>
+            <div style="margin-top:8px" class="legend">
+              <div><div class="sw" style="background:var(--accent)"></div><span class="muted">Dine-In</span></div>
+              <div><div class="sw" style="background:var(--success)"></div><span class="muted">Delivery</span></div>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="margin:6px 0">Top Menu Items</h3>
+        <div id="topItems" class="menu-list"></div>
+      </section>
+
+      <section id="view-menu" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h2 style="margin:0">Menu Manager</h2>
+          <div class="muted">Add, edit, toggle availability</div>
+        </div>
+        <div style="height:12px"></div>
+        <div id="menuList" class="menu-list"></div>
+      </section>
+
+      <section id="view-orders" style="display:none">
+        <h2>Orders</h2>
+        <div class="orders" style="padding:8px">
+          <table id="ordersAll"><thead><tr><th>ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table>
+        </div>
+      </section>
+
+      <section id="view-analytics" style="display:none">
+        <h2>Analytics</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>Daily Revenue</h3>
+            <canvas id="revenueChart" style="height:140px"></canvas>
+          </div>
+          <div class="card">
+            <h3>Orders by Channel</h3>
+            <canvas id="channelChart" style="height:140px"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-settings" style="display:none">
+        <h2>Settings</h2>
+        <div class="card" style="padding:14px">
+          <div class="muted">Business name</div>
+          <input id="bizName" style="margin-top:8px;padding:8px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:inherit;width:100%" />
+          <div class="actions"><button class="btn" id="saveSettings">Save</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- modal add/edit -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog">
+      <h3 id="modalTitle">Add Menu Item</h3>
+      <div style="height:8px"></div>
+      <div class="form-row"><input id="itemName" placeholder="Name" /></div>
+      <div class="form-row" style="margin-top:8px"><input id="itemPrice" placeholder="Price (₹)" /></div>
+      <div class="form-row" style="margin-top:8px"><input id="itemImg" placeholder="Image URL" /></div>
+      <div style="margin-top:8px"><textarea id="itemDesc" placeholder="Short description" style="width:100%;min-height:76px;border-radius:8px;padding:8px;border:1px solid var(--glass-border);background:transparent;color:inherit"></textarea></div>
+      <div class="actions"><button class="btn" id="saveItem">Save</button><button class="btn ghost" id="cancelItem">Cancel</button></div>
+    </div>
+  </div>
+
+  <!-- scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Demo data (in-memory)
+    const state = {
+      bizName: 'FoodBiz',
+      menu: [
+        {id:1,name:'Paneer Butter Masala',price:220,desc:'Creamy paneer curry',img:'https://picsum.photos/seed/paneer/200/200',available:true, sold:34},
+        {id:2,name:'Margherita Pizza',price:340,desc:'Classic cheese & tomato',img:'https://picsum.photos/seed/pizza/200/200',available:true, sold:58},
+        {id:3,name:'Chicken Biryani',price:280,desc:'Spiced rice with chicken',img:'https://picsum.photos/seed/biryani/200/200',available:true, sold:81},
+        {id:4,name:'Chocolate Brownie',price:120,desc:'Served warm with ice cream',img:'https://picsum.photos/seed/brownie/200/200',available:false, sold:26}
+      ],
+      orders: [
+        {id:'ORD1001',customer:'Ramesh',items:[{name:'Chicken Biryani',qty:1}],total:280,status:'Completed',channel:'Delivery'},
+        {id:'ORD1002',customer:'Sneha',items:[{name:'Margherita Pizza',qty:2}],total:680,status:'Preparing',channel:'Dine-In'},
+        {id:'ORD1003',customer:'Asha',items:[{name:'Paneer Butter Masala',qty:1},{name:'Naan',qty:2}],total:320,status:'Pending',channel:'Delivery'}
+      ]
+    }
+
+    // helpers
+    const el = q=>document.querySelector(q);
+    const elAll = q=>document.querySelectorAll(q);
+
+    function uid(prefix='id'){return prefix+Math.random().toString(36).slice(2,9)}
+
+    // render functions
+    function renderOverview(){
+      el('#todaysOrders').textContent = state.orders.filter(o=>new Date().toDateString()).length || state.orders.length;
+      el('#revenue').textContent = '₹' + state.orders.reduce((s,o)=>s+o.total,0);
+      el('#menuCount').textContent = state.menu.length;
+      el('#pendingCount').textContent = state.orders.filter(o=>o.status==='Pending').length;
+      el('#totalSales').textContent = state.orders.reduce((s,o)=>s+o.total,0);
+
+      // recent orders table
+      const tbody = el('#ordersTable tbody'); tbody.innerHTML='';
+      state.orders.slice().reverse().forEach(o=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${o.id}</td><td>${o.customer}</td><td>${o.items.map(i=>i.name+ (i.qty?(' x'+i.qty):'' )).join(', ')}</td><td>₹${o.total}</td><td>${o.status}</td><td><button class='btn ghost' data-id='${o.id}' onclick="viewOrder('${o.id}')">View</button></td>`;
+        tbody.appendChild(tr);
+      });
+
+      // top items
+      const top = state.menu.slice().sort((a,b)=>b.sold-a.sold).slice(0,4);
+      const topCont = el('#topItems'); topCont.innerHTML='';
+      top.forEach(it=>{
+        const div = document.createElement('div'); div.className='menu-item';
+        div.innerHTML = `<img src='${it.img}' alt=''><div class='meta'><div style='display:flex;justify-content:space-between;align-items:center'><div><strong>${it.name}</strong><div class='muted' style='font-size:12px'>${it.desc}</div></div><div style='text-align:right'><div style='font-weight:800'>₹${it.price}</div><div class='muted' style='font-size:12px'>Sold ${it.sold}</div></div></div></div>`;
+        topCont.appendChild(div);
+      });
+
+      renderCharts();
+    }
+
+    function renderMenu(){
+      const cont = el('#menuList'); cont.innerHTML='';
+      state.menu.forEach(it=>{
+        const div = document.createElement('div'); div.className='menu-item';
+        div.innerHTML = `<img src='${it.img}' alt=''><div class='meta'><div style='display:flex;justify-content:space-between;align-items:center'><div><strong>${it.name}</strong><div class='muted' style='font-size:12px'>${it.desc}</div></div><div style='text-align:right'><div style='font-weight:800'>₹${it.price}</div><div style='margin-top:6px;display:flex;gap:6px;justify-content:flex-end'><button class='btn ghost' onclick="openEdit(${it.id})">Edit</button><button class='btn' onclick="toggleAvail(${it.id})">${it.available? 'Disable':'Enable'}</button></div></div></div></div>`;
+        cont.appendChild(div);
+      });
+      el('#menuCount').textContent = state.menu.length;
+    }
+
+    function renderOrdersAll(){
+      const tbody = el('#ordersAll tbody'); tbody.innerHTML='';
+      state.orders.forEach(o=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${o.id}</td><td>${o.customer}</td><td>${o.items.map(i=>i.name+' x'+(i.qty||1)).join(', ')}</td><td>₹${o.total}</td><td>${o.status}</td><td><button class='btn' onclick="updateStatus('${o.id}')">Next</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // basic charts
+    let salesChart, revenueChart, channelChart;
+    function renderCharts(){
+      const salesCtx = el('#salesChart');
+      const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const salesA = labels.map(()=>Math.floor(Math.random()*50+20));
+      const salesB = labels.map(()=>Math.floor(Math.random()*40+10));
+      if(salesChart) salesChart.destroy();
+      salesChart = new Chart(salesCtx,{type:'bar',data:{labels, datasets:[{label:'Dine-In',data:salesA},{label:'Delivery',data:salesB}]}, options:{responsive:true,plugins:{legend:{display:false}}}});
+
+      const revCtx = el('#revenueChart');
+      if(revenueChart) revenueChart.destroy();
+      revenueChart = new Chart(revCtx,{type:'line',data:{labels, datasets:[{label:'Revenue',data:labels.map(()=>Math.floor(Math.random()*5000+2000)),tension:0.4}]}, options:{plugins:{legend:{display:false}}}});
+
+      const chCtx = el('#channelChart');
+      if(channelChart) channelChart.destroy();
+      channelChart = new Chart(chCtx,{type:'doughnut',data:{labels:['Dine-In','Delivery','Pickup'],datasets:[{data:[45,40,15]}]}, options:{plugins:{legend:{position:'bottom'}}}});
+    }
+
+    // interactions
+    function openModal(editItem){
+      el('#modalBackdrop').style.display='flex';
+      if(editItem){
+        el('#modalTitle').textContent='Edit Menu Item';
+        el('#itemName').value = editItem.name; el('#itemPrice').value = editItem.price; el('#itemImg').value = editItem.img; el('#itemDesc').value = editItem.desc;
+        el('#saveItem').dataset.edit = editItem.id;
+      } else {
+        el('#modalTitle').textContent='Add Menu Item'; el('#itemName').value=''; el('#itemPrice').value=''; el('#itemImg').value=''; el('#itemDesc').value=''; delete el('#saveItem').dataset.edit;
+      }
+    }
+    function closeModal(){ el('#modalBackdrop').style.display='none'; }
+
+    function openEdit(id){ const it = state.menu.find(m=>m.id===id); if(it) openModal(it); }
+    function toggleAvail(id){ const it=state.menu.find(m=>m.id===id); if(it){ it.available=!it.available; renderMenu(); renderOverview(); } }
+
+    function saveItem(){
+      const name = el('#itemName').value.trim(); const price = parseFloat(el('#itemPrice').value)||0; const img = el('#itemImg').value.trim() || 'https://picsum.photos/seed/'+Math.random()+'/200/200'; const desc = el('#itemDesc').value.trim();
+      const editId = el('#saveItem').dataset.edit;
+      if(!name){alert('Enter a name');return}
+      if(editId){
+        const it = state.menu.find(m=>m.id==editId); it.name=name; it.price=price; it.img=img; it.desc=desc;
+      } else {
+        state.menu.push({id:Date.now(),name,price,desc,img,available:true,sold:0});
+      }
+      closeModal(); renderMenu(); renderOverview();
+    }
+
+    function updateStatus(id){ const o = state.orders.find(x=>x.id===id); if(!o) return; const orderFlow=['Pending','Preparing','Completed']; const idx = orderFlow.indexOf(o.status); o.status = orderFlow[Math.min(orderFlow.length-1, idx+1)]; renderOverview(); renderOrdersAll(); }
+
+    function viewOrder(id){ const o = state.orders.find(x=>x.id===id); if(!o) return alert(JSON.stringify(o,null,2)); }
+
+    // nav
+    elAll('.nav-item').forEach(n=>n.addEventListener('click',e=>{ elAll('.nav-item').forEach(x=>x.classList.remove('active')); n.classList.add('active'); const view = n.dataset.view; document.querySelectorAll('main section').forEach(s=>s.style.display='none'); el('#view-'+view).style.display='block'; }))
+
+    // search
+    el('#globalSearch').addEventListener('input', e=>{
+      const q = e.target.value.toLowerCase(); if(!q){ renderMenu(); renderOrdersAll(); return }
+      // filter menu
+      const menuFiltered = state.menu.filter(m=>m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q));
+      const cont = el('#menuList'); cont.innerHTML=''; menuFiltered.forEach(it=>{ const div=document.createElement('div'); div.className='menu-item'; div.innerHTML=`<img src='${it.img}'><div class='meta'><strong>${it.name}</strong><div class='muted'>${it.desc}</div></div>`; cont.appendChild(div); });
+      // filter orders
+      const tbody = el('#ordersAll tbody'); tbody.innerHTML=''; state.orders.filter(o=>o.id.toLowerCase().includes(q)||o.customer.toLowerCase().includes(q)||o.items.some(i=>i.name.toLowerCase().includes(q))).forEach(o=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${o.id}</td><td>${o.customer}</td><td>${o.items.map(i=>i.name).join(', ')}</td><td>₹${o.total}</td><td>${o.status}</td><td></td>`; tbody.appendChild(tr); });
+    })
+
+    // bind modal buttons
+    el('#addMenuBtn').addEventListener('click',()=>openModal());
+    el('#cancelItem').addEventListener('click',closeModal);
+    el('#saveItem').addEventListener('click',saveItem);
+    el('#modalBackdrop').addEventListener('click',e=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+
+    // settings
+    el('#bizName').value = state.bizName;
+    el('#saveSettings').addEventListener('click',()=>{ state.bizName = el('#bizName').value || state.bizName; alert('Settings saved'); })
+
+    // initial render
+    renderMenu(); renderOverview(); renderOrdersAll();
+
+    // Expose some functions for inline onclick (simpler for single-file demo)
+    window.openEdit = openEdit; window.toggleAvail = toggleAvail; window.updateStatus = updateStatus; window.viewOrder = viewOrder;
+  </script>
+</body>
+</html>
